@@ -1,3 +1,4 @@
+// src/QrScanner.jsx
 import React, { useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -13,27 +14,22 @@ function QrScanner({ onScan }) {
         const devices = await Html5Qrcode.getCameras();
         if (!isMounted) return;
 
-        if (devices && devices.length) {
-          // Usa la primera cámara disponible
-          const cameraId = devices[0].id;
-          html5QrCodeRef.current = new Html5Qrcode(scannerRef.current.id);
+        const backCamera = devices.find((device) =>
+          /back|rear|environment/i.test(device.label)
+        );
 
-          await html5QrCodeRef.current.start(
-            cameraId,
-            { fps: 10, qrbox: 250 },
-            (decodedText) => {
-              onScan(decodedText);
-              html5QrCodeRef.current
-                .stop()
-                .catch(() => {}); // evita error si ya está parado
-            },
-            (error) => {
-              // Errores de escaneo menores, se pueden ignorar
-            }
-          );
-        } else {
-          console.error("No se encontraron cámaras disponibles.");
-        }
+        const cameraId = backCamera ? backCamera.id : devices[0].id;
+
+        html5QrCodeRef.current = new Html5Qrcode(scannerRef.current.id);
+
+        await html5QrCodeRef.current.start(
+          cameraId,
+          { fps: 10, qrbox: 250 },
+          (decodedText) => {
+            onScan(decodedText);
+            html5QrCodeRef.current.stop().catch(() => {});
+          }
+        );
       } catch (err) {
         console.error("Error inicializando cámara:", err);
       }
