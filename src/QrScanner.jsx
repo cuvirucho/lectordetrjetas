@@ -1,51 +1,59 @@
 // src/QrScanner.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 function QrScanner({ onScan }) {
-  const scannerRef = useRef(null);
-  const html5QrCodeRef = useRef(null);
-
   useEffect(() => {
-    let isMounted = true;
+    const scannerId = "reader";
+    const html5QrCode = new Html5Qrcode(scannerId);
 
-    const initScanner = async () => {
+    const init = async () => {
       try {
         const devices = await Html5Qrcode.getCameras();
-        if (!isMounted) return;
+        if (!devices || devices.length === 0) {
+          console.error("❌ No se encontraron cámaras disponibles.");
+          return;
+        }
 
-        const backCamera = devices.find((device) =>
-          /back|rear|environment/i.test(device.label)
-        );
+        const backCamera = devices.find((d) =>
+          /back|rear|environment/i.test(d.label)
+        ) || devices[0];
 
-        const cameraId = backCamera ? backCamera.id : devices[0].id;
-
-        html5QrCodeRef.current = new Html5Qrcode(scannerRef.current.id);
-
-        await html5QrCodeRef.current.start(
-          cameraId,
+        await html5QrCode.start(
+          backCamera.id,
           { fps: 10, qrbox: 250 },
           (decodedText) => {
             onScan(decodedText);
-            html5QrCodeRef.current.stop().catch(() => {});
+            html5QrCode.stop().catch(() => {});
+          },
+          (errorMessage) => {
+            console.warn("Escaneo fallido:", errorMessage);
           }
         );
       } catch (err) {
-        console.error("Error inicializando cámara:", err);
+        console.error("❌ Error inicializando cámara:", err);
+        alert("❌ No se pudo acceder a la cámara. Verifica los permisos.");
       }
     };
 
-    initScanner();
+    init();
 
     return () => {
-      isMounted = false;
-      if (html5QrCodeRef.current) {
-        html5QrCodeRef.current.stop().catch(() => {});
-      }
+      html5QrCode.stop().catch(() => {});
     };
   }, [onScan]);
 
-  return <div id="reader" ref={scannerRef} style={{ width: "100%" }} />;
+  return (
+    <div
+      id="reader"
+      style={{
+        width: "100%",
+        height: "300px",
+        border: "1px solid #ccc",
+        marginTop: "10px"
+      }}
+    />
+  );
 }
 
 export default QrScanner;
