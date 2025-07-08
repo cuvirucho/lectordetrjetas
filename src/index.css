@@ -1,68 +1,153 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
+*{
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+:root {
+  --color-primario: #762cd6;
+  --color-secundario: #8356eb;
+  --color-texto: #333;
+}
+.hderd{
+  background-color:var(--color-primario);
+  width: 100%;
   display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.logodellocal{
+  background-color: rgba(70, 131, 180, 0);
+width:30%;
+object-fit: scale-down;
+}
+.contefull{
+   background-image: url('https://res.cloudinary.com/db8e98ggo/image/upload/v1731129104/Que_esperas_._938_x_781_px_vzogmm.png');
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
+height: 100vh;
+}
+.CONTESCANER{
+  background-color: rgba(255, 255, 0, 0);
+  width: 100%;
+  display: flex;
+  color: #762cd6;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.qrscanner{
+  background-color: aqua;
+  border-radius: 2;
+}
+/*pondor de puntos*/
+.CONTESCANERdatosfull{
+  background-color: rgba(255, 0, 0, 0);
+  width: 100%;
+  height: 50%;
+}
+.datos{
+  background-color: rgba(139, 238, 9, 0);
+display: flex;
+font-size: clamp(1.5rem, 2vw, 1.5rem);
+text-align: center;
+color: var(--color-primario);
+
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+.agrgaragpuntos{
+  background-color: rgba(255, 0, 255, 0);
+width: 100%;
+padding: 10px;
+display: flex;
+gap: 10px;
 
-button {
+}
+.inputpuntos{
+  background-color: rgb(255, 255, 255);
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  width: 80%;
+  font-size: clamp(1.5rem, 2vw, 1.5rem);
+  box-shadow: -2px 7px 10px var(--color-primario);
+}
+.btnagrgar{
+  background: var(--color-secundario);
+  border: 2px solid #999;
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  padding: 6px 12px;
+  font-size: 15px;
+  color: #ffffff;
   cursor: pointer;
-  transition: border-color 0.25s;
+  box-shadow:
+    inset 3px 3px 5px var(--color-secundario),   /* sombra clara arriba izquierda */
+    inset -3px -3px 5px var(--color-primario); /* sombra oscura abajo derecha */
+  transition: box-shadow 0.2s ease;
+  user-select: none; 
 }
-button:hover {
-  border-color: #646cff;
+.premios{
+  background-color: rgba(65, 105, 225, 0);
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primario);
+  font-size: clamp(1.55rem, 2vw, 1.5rem);
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.premioslist{
+  background-color: var(--color-primario);
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+overflow-x: auto;
+  gap: 20px;
+  padding: 10px;
+  height: auto;
+  color: var(--color-primario);
 }
+.ptmio{
+  background-color: rgb(255, 255, 255);
+  width: 100%;
+  color: var(--color-primario);
+  display: flex;
+  min-width: 250px;
+  max-width: 300px;
+  padding: 10px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+   font-size: clamp(1.5rem, 2vw, 1.5rem);
+border-radius: 10px;
+height: 162px;
+  }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+  .btncanjear{
+  background: var(--color-secundario);
+  border: 2px solid #999;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 15px;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow:
+    inset 3px 3px 5px var(--color-secundario),   /* sombra clara arriba izquierda */
+    inset -3px -3px 5px var(--color-primario); /* sombra oscura abajo derecha */
+  transition: box-shadow 0.2s ease;
+  user-select: none; 
+margin-top: 550px;
+}
+.btscaneartor{
+  background-color: #ffffff;
+  border: none;
+margin-top: 15px;
+font-size: clamp(1.3rem, 2vw, 1.5rem);
+color: slategrey;
 }

@@ -1,59 +1,91 @@
-// src/QrScanner.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
-function QrScanner({ onScan }) {
-  useEffect(() => {
-    const scannerId = "reader";
-    const html5QrCode = new Html5Qrcode(scannerId);
+function QrScanner({ onScan, activo }) {
+  const html5QrCodeRef = useRef(null);
+  const lastErrorTimeRef = useRef(0);
+  const scannerId = "reader";
 
-    const init = async () => {
+  useEffect(() => {
+    if (!html5QrCodeRef.current) {
+      html5QrCodeRef.current = new Html5Qrcode(scannerId);
+    }
+
+    const html5QrCode = html5QrCodeRef.current;
+
+    const startScanner = async () => {
       try {
-        const devices = await Html5Qrcode.getCameras();
-        if (!devices || devices.length === 0) {
-          console.error("❌ No se encontraron cámaras disponibles.");
+        // Espera a que el div esté montado
+        const container = document.getElementById(scannerId);
+        if (!container || container.offsetWidth === 0) {
+          console.warn("📦 Contenedor no visible o sin ancho aún.");
           return;
         }
 
-        const backCamera = devices.find((d) =>
-          /back|rear|environment/i.test(d.label)
-        ) || devices[0];
+        const devices = await Html5Qrcode.getCameras();
+        if (!devices || devices.length === 0) {
+          console.error("❌ No se encontraron cámaras.");
+          return;
+        }
+
+        const backCamera =
+          devices.find((d) => /back|rear|environment/i.test(d.label)) ||
+          devices[0];
+
+        if (html5QrCode._isScanning) {
+          console.log("⏹️ Ya está escaneando, deteniendo antes de reiniciar...");
+          await html5QrCode.stop(); // No llamamos a clear()
+        }
 
         await html5QrCode.start(
           backCamera.id,
           { fps: 10, qrbox: 250 },
-          (decodedText) => {
+          async (decodedText) => {
             onScan(decodedText);
-            html5QrCode.stop().catch(() => {});
+            console.log("✅ Código QR escaneado:", decodedText);
+            try {
+              await html5QrCode.stop();
+            } catch (e) {
+              console.error("Error al detener escáner después de escanear:", e);
+            }
           },
           (errorMessage) => {
-            console.warn("Escaneo fallido:", errorMessage);
+            const ahora = Date.now();
+            if (ahora - lastErrorTimeRef.current > 1000) {
+              console.warn("Escaneo fallido:", errorMessage);
+              lastErrorTimeRef.current = ahora;
+            }
           }
         );
       } catch (err) {
-        console.error("❌ Error inicializando cámara:", err);
-        alert("❌ No se pudo acceder a la cámara. Verifica los permisos.");
+        console.error("❌ Error inicializando cámara:", err.message || err);
+       
       }
     };
 
-    init();
+    const stopScanner = async () => {
+      const html5QrCode = html5QrCodeRef.current;
+      if (html5QrCode && html5QrCode._isScanning) {
+        try {
+          await html5QrCode.stop();
+        } catch (e) {
+          console.error("Error al detener escáner:", e);
+        }
+      }
+    };
+
+    if (activo) {
+      startScanner();
+    } else {
+      stopScanner();
+    }
 
     return () => {
-      html5QrCode.stop().catch(() => {});
+      stopScanner();
     };
-  }, [onScan]);
+  }, [activo, onScan]);
 
-  return (
-    <div
-      id="reader"
-      style={{
-        width: "100%",
-        height: "300px",
-        border: "1px solid #ccc",
-        marginTop: "10px"
-      }}
-    />
-  );
+  return <div id="reader" className="qrscanner" style={{ width: "100%" }} />;
 }
 
 export default QrScanner;

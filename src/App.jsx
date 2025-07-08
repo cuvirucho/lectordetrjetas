@@ -1,15 +1,52 @@
-// src/App.jsx
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import { db } from './Firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import QrScanner from './QrScanner';
+import { collection, getDocs } from 'firebase/firestore'; // ya deberías tenerlo en tus imports
 
 function App() {
   const [cliente, setCliente] = useState(null);
   const [puntos, setPuntos] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [escaneando, setEscaneando] = useState(true);
+const [premiosDisponibles, setPremiosDisponibles] = useState([]);
+
+  const premiosCargadosRef = useRef(false); // 👈 Solo se ejecuta una vez
+
+  useEffect(() => {
+    const cargarPremios = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'premios'));
+        const premios = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log("🎁 Premios desde Firebase:", premios);
+        setPremiosDisponibles(premios);
+      } catch (err) {
+        console.error("❌ Error al cargar premios:", err);
+      }
+    };
+
+    if (!premiosCargadosRef.current) {
+      premiosCargadosRef.current = true;
+      cargarPremios();
+    }
+  }, []);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   const onScan = async (codigoQR) => {
     setEscaneando(false);
@@ -40,7 +77,11 @@ function App() {
         return;
       }
 
-      setCliente(data);
+      // Asegurar que 'reclamados' esté presente como array
+      setCliente({
+        ...data,
+        reclamados: Array.isArray(data.reclamados) ? data.reclamados : [],
+      });
       setMensaje('');
     } catch (err) {
       console.error(err);
@@ -74,38 +115,142 @@ function App() {
     }
   };
 
+
+
+  const reclamarPremio = async (premio) => {
+    if (!cliente) return;
+
+    const puntosDisponibles = cliente.puntos || 0;
+    const yaReclamados = Array.isArray(cliente.reclamados) ? cliente.reclamados : [];
+
+    if (puntosDisponibles < premio.costo) {
+      setMensaje("❌ No tienes suficientes puntos para este premio.");
+      return;
+    }
+
+    if (yaReclamados.includes(premio.nombre)) {
+      setMensaje("❌ Ya reclamaste este premio.");
+      return;
+    }
+
+    try {
+      const nuevosPuntos = puntosDisponibles - premio.costo;
+      const nuevosReclamados = [...yaReclamados, premio.nombre];
+
+      await updateDoc(doc(db, 'clientes', cliente.telefono), {
+        puntos: nuevosPuntos,
+        reclamados: nuevosReclamados,
+        token: cliente.token,
+      });
+
+      setCliente({
+        ...cliente,
+        puntos: nuevosPuntos,
+        reclamados: nuevosReclamados,
+      });
+
+      setMensaje(`✅ Reclamaste "${premio.nombre}". Te quedan ${nuevosPuntos} puntos.`);
+    } catch (err) {
+      console.error("❌ Error al reclamar premio:", err);
+      setMensaje("❌ Error al reclamar premio.");
+    }
+  };
+
   return (
-    <div style={{ maxWidth: 400, margin: 'auto', fontFamily: 'Arial' }}>
-      <h2>🎯 Escanea el QR del cliente</h2>
-
-      {escaneando && <QrScanner onScan={onScan} />}
-
-      {cliente && (
-        <div>
-          <p><strong>Nombre:</strong> {cliente.nombre}</p>
-          <p><strong>Teléfono:</strong> {cliente.telefono}</p>
-          <p><strong>Puntos:</strong> {cliente.puntos}</p>
-
-          <input
-            type="number"
-            value={puntos}
-            onChange={(e) => setPuntos(e.target.value)}
-            placeholder="Puntos a agregar"
+    <>
+      <article className='contefull'>
+        <section className='hderd'>
+          <img
+            className='logodellocal'
+            src="https://res.cloudinary.com/db8e98ggo/image/upload/v1731124196/Que_esperas_._dqfhgg.png"
+            alt="Logo"
           />
-          <button onClick={sumarPuntos}>Agregar Puntos</button>
-          <button onClick={() => {
-            setCliente(null);
-            setEscaneando(true);
-            setPuntos('');
-            setMensaje('');
-          }}>
-            Escanear otro
-          </button>
-        </div>
-      )}
+        </section>
 
-      {mensaje && <p style={{ marginTop: 10 }}>{mensaje}</p>}
-    </div>
+        {cliente ? (
+          <div className='CONTESCANERdatosfull'>
+            <div className='datos'>
+              <p><strong>Nombre</strong> {cliente.nombre}</p>
+              <p><strong>Teléfono</strong> {cliente.telefono}</p>
+              <p><strong>Puntos</strong> {cliente.puntos}</p>
+            </div>
+
+            <section className='agrgaragpuntos'>
+              <input
+                type="number"
+                value={puntos}
+                className='inputpuntos'
+                onChange={(e) => setPuntos(e.target.value)}
+                placeholder="Puntos a agregar"
+              />
+              <button className='btnagrgar' onClick={sumarPuntos}>Agregar</button>
+            </section>
+
+            <section className='premios'>
+              <h3>Premios disponibles</h3>
+
+              <ul className='premioslist'>
+                {premiosDisponibles.map((premio) => {
+                  const yaReclamado = (cliente.reclamados || []).includes(premio.nombre);
+                  const puedeReclamar = (cliente.puntos || 0) >= premio.costo && !yaReclamado;
+
+                  return (
+                    <li key={premio.nombre} className='ptmio'>
+                      🎁 <strong>{premio.nombre}</strong> - {premio.costo} puntos
+                      {yaReclamado ? (
+                        <span style={{ color: 'gray', marginLeft: 10 }}>✅ Ya reclamado</span>
+                      ) : (
+                        <button
+                          onClick={() => reclamarPremio(premio)}
+                          disabled={!puedeReclamar}
+                         className='btnagrgar'
+                        >
+                          Canjear
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            
+
+       
+          
+
+
+           <button
+           className='btscaneartor'  
+              onClick={() => {
+                setCliente(null);
+                setEscaneando(true);
+                setPuntos('');
+                setMensaje('');
+              }}
+              >
+              Escanear otro
+            </button>
+
+              </section>
+          
+          </div>
+        )
+        
+        
+        :
+         (
+          <div className='CONTESCANER'>
+            <h2>Escanea el QR del cliente</h2>
+            <QrScanner activo={escaneando} onScan={onScan} />
+          </div>
+        )}
+
+        {mensaje && <p style={{ marginTop: 100 }}>{mensaje}</p>}
+      
+
+          
+      
+      </article>
+    </>
   );
 }
 
